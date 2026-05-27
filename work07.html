@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LV Perfume VFX — Endy Huang</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: #0a0a0a; color: #f0ede8; font-family: 'DM Sans', sans-serif; font-weight: 300; cursor: none; }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; width: 100%; }
+    .cursor { width: 6px; height: 6px; background: #f0ede8; border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); transition: width 0.2s, height 0.2s; }
+    .cursor.hover { width: 36px; height: 36px; background: transparent; border: 0.5px solid rgba(240,237,232,0.4); }
+    .page-loader { position: fixed; inset: 0; background: #0a0a0a; z-index: 99999; transition: opacity 0.6s ease; }
+    .page-loader.done { opacity: 0; pointer-events: none; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 52px; background: transparent; transition: background 0.3s; }
+    nav.scrolled { background: rgba(10,10,10,0.92); backdrop-filter: blur(16px); border-bottom: 0.5px solid rgba(255,255,255,0.06); }
+    .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 0.18em; }
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links > a { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(240,237,232,0.6); transition: color 0.2s; }
+    .nav-links > a:hover { color: #f0ede8; }
+    .nav-work { position: relative; }
+    .nav-work > a { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(240,237,232,0.6); transition: color 0.2s; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    .nav-work > a:hover { color: #f0ede8; }
+    .nav-work > a::after { content: '▾'; font-size: 9px; opacity: 0.5; }
+    .work-dropdown { position: absolute; top: 100%; right: 0; padding-top: 12px; min-width: 280px; opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity 0.2s, transform 0.2s; }
+    .work-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+    .work-dropdown-inner { background: #0a0a0a; border: 0.5px solid rgba(255,255,255,0.12); }
+    .dropdown-section { padding: 8px 0; }
+    .dropdown-item { display: flex; justify-content: space-between; align-items: center; padding: 9px 20px; font-size: 11px; letter-spacing: 0.07em; color: rgba(240,237,232,0.5); transition: color 0.15s, background 0.15s; cursor: pointer; }
+    .dropdown-item:hover { color: #f0ede8; background: rgba(255,255,255,0.03); }
+    .dropdown-item .num { font-size: 9px; opacity: 0.3; }
+
+    /* ── Header 左圖右文（直向封面）── */
+    .project-header {
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 0.5px solid rgba(255,255,255,0.06);
+      position: relative;
+    }
+    .project-header-img {
+      overflow: hidden;
+      background: #111;
+      border-right: 0.5px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .project-header-img img {
+      height: 100%;
+      width: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .project-header-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 52px;
+      z-index: 2;
+    }
+    .project-eyebrow { display: flex; align-items: center; gap: 12px; font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(240,237,232,0.45); margin-bottom: 8px; }
+    .project-eyebrow::before { content: ''; display: block; width: 24px; height: 0.5px; background: currentColor; }
+    .project-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(32px, 3.5vw, 52px); letter-spacing: 0.02em; line-height: 0.92; text-transform: uppercase; color: #f0ede8; margin-bottom: 12px; }
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(240,237,232,0.55); border: 0.5px solid rgba(255,255,255,0.2); padding: 3px 10px; }
+    .header-scroll { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(240,237,232,0.35); display: flex; flex-direction: column; align-items: center; gap: 8px; white-space: nowrap; z-index: 2; }
+    .header-scroll::after { content: ''; width: 0.5px; height: 28px; background: currentColor; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 0.25; } 50% { opacity: 0.7; } }
+
+    /* ── Concept ── */
+    .concept-block { display: grid; grid-template-columns: 1fr 2fr; border-bottom: 0.5px solid rgba(255,255,255,0.06); }
+    .concept-left { padding: 36px 52px; border-right: 0.5px solid rgba(255,255,255,0.06); }
+    .concept-label { font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 0.05em; color: rgba(240,237,232,0.06); line-height: 1; margin-bottom: 16px; }
+    .concept-index { font-size: 10px; letter-spacing: 0.18em; color: rgba(240,237,232,0.22); text-transform: uppercase; }
+    .concept-meta { margin-top: 24px; display: flex; flex-direction: column; gap: 18px; }
+    .meta-item { display: flex; flex-direction: column; gap: 5px; }
+    .meta-key { font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(240,237,232,0.22); }
+    .meta-val { font-size: 12px; color: rgba(240,237,232,0.65); letter-spacing: 0.04em; }
+    .concept-right { padding: 36px 64px; }
+    .concept-heading { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 20px; }
+    .concept-body { font-size: 14px; line-height: 2; color: rgba(240,237,232,0.5); max-width: 560px; }
+
+    /* ── Section bar ── */
+    .section-bar { display: flex; justify-content: space-between; align-items: center; padding: 13px 52px; border-bottom: 0.5px solid rgba(255,255,255,0.06); }
+    .section-bar-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(240,237,232,0.25); }
+
+    /* ── 影片左 + Process 右 ── */
+    .video-process-block { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 0.5px solid rgba(255,255,255,0.06); }
+    .video-left { padding: 48px 24px 48px 52px; border-right: 0.5px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; align-items: flex-start; }
+    .video-left video { width: 100%; max-height: 75vh; border-radius: 8px; display: block; object-fit: contain; }
+    .video-left .video-controls { width: 100%; padding: 12px 0 0; }
+    .process-right { padding: 48px 52px 48px 24px; display: flex; flex-direction: column; justify-content: center; gap: 20px; }
+    .process-right img { border-radius: 8px; width: 100%; }
+    .process-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .process-desc { font-size: 13px; line-height: 2; color: rgba(240,237,232,0.45); }
+
+    /* 自訂影片控制列 */
+    .video-controls { display: flex; align-items: center; gap: 12px; }
+    .ctrl-btn { background: none; border: none; color: rgba(240,237,232,0.6); cursor: pointer; font-size: 14px; padding: 0; flex-shrink: 0; transition: color 0.2s; }
+    .ctrl-btn:hover { color: #f0ede8; }
+    .ctrl-progress { flex: 1; height: 2px; background: rgba(255,255,255,0.15); border-radius: 2px; cursor: pointer; }
+    .ctrl-progress-bar { height: 100%; background: rgba(240,237,232,0.7); border-radius: 2px; width: 0%; transition: width 0.1s linear; pointer-events: none; }
+    .ctrl-time { font-size: 10px; letter-spacing: 0.08em; color: rgba(240,237,232,0.35); white-space: nowrap; min-width: 64px; text-align: right; }
+    .ctrl-vol { width: 60px; height: 2px; background: rgba(255,255,255,0.15); border-radius: 2px; cursor: pointer; flex-shrink: 0; }
+    .ctrl-vol-bar { height: 100%; background: rgba(240,237,232,0.5); border-radius: 2px; width: 0%; pointer-events: none; }
+
+    /* ── Next ── */
+    .next-project { display: flex; justify-content: space-between; align-items: center; padding: 40px 52px; border-bottom: 0.5px solid rgba(255,255,255,0.06); cursor: pointer; transition: background 0.3s; }
+    .next-project:hover { background: rgba(255,255,255,0.02); }
+    .next-project:hover .next-arrow { transform: translateX(6px); }
+    .next-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(240,237,232,0.22); margin-bottom: 8px; }
+    .next-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 0.07em; text-transform: uppercase; }
+    .next-arrow { font-size: 28px; color: rgba(240,237,232,0.2); transition: transform 0.2s; }
+
+    footer { padding: 22px 52px; display: flex; justify-content: space-between; align-items: center; }
+    .footer-l { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(240,237,232,0.16); }
+    .footer-r { display: flex; gap: 28px; }
+    .footer-r a { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(240,237,232,0.16); transition: color 0.2s; }
+    .footer-r a:hover { color: rgba(240,237,232,0.55); }
+
+    .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.75s ease, transform 0.75s ease; }
+    .fade-up.in { opacity: 1; transform: none; }
+
+    /* ── Nav active ── */
+    .nav-links > a { position: relative; }
+    .nav-links > a.nav-active { color: #f0ede8 !important; }
+    .nav-links > a.nav-active::after { content:""; position:absolute; left:0; bottom:-3px; width:100%; height:0.5px; background:#f0ede8; opacity:.5; }
+    .nav-work.nav-active > a { color: #f0ede8 !important; }
+    /* ── Page overlay ── */
+    .page-overlay { position:fixed; inset:0; background:#0a0a0a; z-index:999998; opacity:0; pointer-events:none; transition:opacity .35s ease; }
+    .page-overlay.show { opacity:1; }
+  </style>
+</head>
+<body>
+
+<div class="page-loader" id="loader"></div>
+<div class="cursor" id="cursor"></div>
+
+<nav id="nav">
+  <a href="index.html" class="nav-logo">Endy Huang</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <div class="nav-work">
+      <a href="index.html#digital-apparel">Digital Apparel</a>
+      <div class="work-dropdown">
+        <div class="work-dropdown-inner">
+          <div class="dropdown-section">
+            <a class="dropdown-item" href="work01.html"><span>Connect x Hazzys</span><span class="num">01</span></a>
+            <a class="dropdown-item" href="work02.html"><span>Dior Saddle Bag</span><span class="num">02</span></a>
+            <a class="dropdown-item" href="work03.html"><span>Irensense</span><span class="num">03</span></a>
+            <a class="dropdown-item" href="work04.html"><span>Connect x Snow Peak</span><span class="num">04</span></a>
+            <a class="dropdown-item" href="work05.html"><span>Life on Mars in the Metaverse</span><span class="num">05</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-work">
+      <a href="index.html#vfx">3D &amp; VFX</a>
+      <div class="work-dropdown">
+        <div class="work-dropdown-inner">
+          <div class="dropdown-section">
+            <a class="dropdown-item" href="work06.html"><span>Human</span><span class="num">01</span></a>
+            <a class="dropdown-item" href="work07.html"><span>LV Perfume VFX</span><span class="num">02</span></a>
+            <a class="dropdown-item" href="work08.html"><span>Blackpink Lightstick VFX</span><span class="num">03</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <a href="workflow.html">Automated Workflow</a>
+    <a href="about.html">About</a>
+  </div>
+</nav>
+
+<div class="project-header">
+  <div class="project-header-img">
+    <img src="assets/03_3d-vfx/02/cover.webp" alt="LV Perfume VFX">
+  </div>
+  <div class="project-header-text">
+    <div class="project-eyebrow">02 / VFX &nbsp;·&nbsp; Blender</div>
+    <div class="project-title">LV Perfume<br>VFX</div>
+    <div class="tags">
+      <span class="tag">Blender</span>
+      <span class="tag">VFX</span>
+      <span class="tag">Camera Tracking</span>
+      <span class="tag">Compositing</span>
+    </div>
+  </div>
+  <div class="header-scroll">Scroll Down</div>
+</div>
+
+<div class="concept-block fade-up">
+  <div class="concept-left">
+    <div class="concept-label">Info</div>
+    <div class="concept-index">02 / Overview</div>
+    <div class="concept-meta">
+      <div class="meta-item">
+        <div class="meta-key">Software</div>
+        <div class="meta-val">Blender</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-key">Location</div>
+        <div class="meta-val">Bellavita, Taipei</div>
+      </div>
+    </div>
+  </div>
+  <div class="concept-right">
+    <div class="concept-heading">Real World, Digital Illusion</div>
+    <div class="concept-body">
+      Filmed at Bellavita during a Louis Vuitton pop-up event. Using the atrium's circular installation as a real-world anchor, I composited a 3D leather perfume box opening mid-air — releasing the fragrance bottle in a cinematic burst. Camera tracked against the original footage for seamless integration.
+    </div>
+  </div>
+</div>
+
+<div class="section-bar">
+  <div class="section-bar-label">Final Render &amp; Camera Tracking</div>
+  <div class="section-bar-label">Blender · VFX</div>
+</div>
+
+<div class="video-process-block fade-up">
+  <div class="video-left">
+    <video id="vid-lv" muted loop playsinline>
+      <source src="assets/03_3d-vfx/02/lvvfx.mp4" type="video/mp4">
+    </video>
+    <div class="video-controls">
+      <button class="ctrl-btn" onclick="togglePlay('vid-lv', this)">▶</button>
+      <div class="ctrl-progress" onclick="seekVideo('vid-lv', event, this)">
+        <div class="ctrl-progress-bar" id="prog-lv"></div>
+      </div>
+      <span class="ctrl-time" id="time-lv">0:00 / 0:00</span>
+      <div class="ctrl-vol" onclick="setVolume('vid-lv', event, this)">
+        <div class="ctrl-vol-bar" id="vol-lv" style="width:0%"></div>
+      </div>
+      <button class="ctrl-btn" onclick="toggleMute('vid-lv', this)">🔇</button>
+    </div>
+  </div>
+  <div class="process-right">
+    <div class="process-title">Camera Tracking</div>
+    <div class="process-desc">The original footage was camera tracked in Blender's motion tracking workspace, solving the camera path from the real environment. The 3D perfume box was then precisely composited into the scene — matching perspective, lighting, and movement frame by frame.</div>
+    <img src="assets/03_3d-vfx/02/process.webp" alt="Camera Tracking">
+  </div>
+</div>
+
+<a class="next-project" href="work08.html">
+  <div>
+    <div class="next-label">Next Project</div>
+    <div class="next-title">Blackpink Lightstick VFX</div>
+  </div>
+  <div class="next-arrow">→</div>
+</a>
+
+<footer>
+  <div class="footer-l">© 2026 Endy Huang</div>
+  <div class="footer-r">
+    <a href="https://linkedin.com/in/yourhandle" rel="noopener" target="_blank">LinkedIn</a>
+    <a href="mailto:p850307@gmail.com">Email</a>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const l = document.getElementById('loader');
+      if (l) { l.classList.add('done'); setTimeout(() => l.remove(), 600); }
+    }, 80);
+  });
+  const cur = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => { cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px'; });
+  document.querySelectorAll('a, .project-header, .process-img').forEach(el => {
+    el.addEventListener('mouseenter', () => cur.classList.add('hover'));
+    el.addEventListener('mouseleave', () => cur.classList.remove('hover'));
+  });
+  window.addEventListener('scroll', () => { document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60); });
+
+  document.querySelectorAll('.nav-work').forEach(navWork => {
+    const dropdown = navWork.querySelector('.work-dropdown');
+    let closeTimer;
+    navWork.addEventListener('mouseenter', () => { clearTimeout(closeTimer); dropdown.classList.add('open'); });
+    navWork.addEventListener('mouseleave', () => { closeTimer = setTimeout(() => dropdown.classList.remove('open'), 120); });
+  });
+
+  const vidLv = document.getElementById('vid-lv');
+  if (vidLv) {
+    new IntersectionObserver((entries) => {
+      entries.forEach(e => { e.isIntersecting ? vidLv.play() : vidLv.pause(); });
+    }, { threshold: 0.4 }).observe(vidLv);
+    vidLv.addEventListener('timeupdate', () => {
+      const p = vidLv.duration ? (vidLv.currentTime / vidLv.duration) * 100 : 0;
+      document.getElementById('prog-lv').style.width = p + '%';
+      document.getElementById('time-lv').textContent = fmt(vidLv.currentTime) + ' / ' + fmt(vidLv.duration || 0);
+    });
+  }
+
+  function fmt(s) { return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0'); }
+  function togglePlay(id, btn) {
+    const v = document.getElementById(id);
+    if (v.paused) { v.play(); btn.textContent = '⏸'; } else { v.pause(); btn.textContent = '▶'; }
+  }
+  function seekVideo(id, e, bar) {
+    const v = document.getElementById(id);
+    const rect = bar.getBoundingClientRect();
+    v.currentTime = ((e.clientX - rect.left) / rect.width) * v.duration;
+  }
+  function toggleMute(id, btn) {
+    const v = document.getElementById(id);
+    v.muted = !v.muted;
+    btn.textContent = v.muted ? '🔇' : '🔊';
+    const key = id.replace('vid-', '');
+    const volBar = document.getElementById('vol-' + key);
+    if (volBar) volBar.style.width = v.muted ? '0%' : (v.volume * 100) + '%';
+  }
+  function setVolume(id, e, bar) {
+    const v = document.getElementById(id);
+    const rect = bar.getBoundingClientRect();
+    const vol = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    v.volume = vol; v.muted = vol === 0;
+    document.getElementById('vol-' + id.replace('vid-', '')).style.width = (vol * 100) + '%';
+  }
+
+  document.querySelectorAll('.fade-up').forEach(el => {
+    new IntersectionObserver((entries, obs) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } });
+    }, { threshold: 0.1 }).observe(el);
+  });
+
+  // ── Nav active state ──
+  (function(){
+    const page = location.pathname.split("/").pop() || "index.html";
+    document.querySelectorAll(".nav-links > a").forEach(a => {
+      if(a.getAttribute("href") === page) a.classList.add("nav-active");
+    });
+    document.querySelectorAll(".nav-work").forEach(nw => {
+      nw.querySelectorAll(".dropdown-item").forEach(item => {
+        if(item.getAttribute("href") === page) nw.classList.add("nav-active");
+      });
+    });
+  })();
+  // ── Page exit transition ──
+  (function(){
+    const ov = document.createElement("div");
+    ov.className = "page-overlay";
+    document.body.appendChild(ov);
+    document.querySelectorAll("a[href]").forEach(link => {
+      const href = link.getAttribute("href");
+      if(!href||href.startsWith("#")||href.startsWith("mailto")||href.startsWith("http")||href.startsWith("tel")) return;
+      link.addEventListener("click", e => {
+        e.preventDefault();
+        ov.classList.add("show");
+        setTimeout(()=>{ window.location.href = href; }, 360);
+      });
+    });
+  })();
+</script>
+</body>
+</html>
